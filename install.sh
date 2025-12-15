@@ -185,7 +185,7 @@ if [[ $REPLY =~ ^[2]$ ]]; then
 else
     VAL_TYPE="openvpn"
     read -p "Enter VPN Username: " VAL_VPN_USER
-    read -s -p "Enter VPN Password: " VAL_VPN_PASS
+    read -p "Enter VPN Password: " VAL_VPN_PASS
     echo ""
     VAL_WG_KEY=""
     VAL_WG_ADDR=""
