@@ -1,13 +1,11 @@
 #!/bin/bash
 
-# --- COLOR DEFINITIONS ---
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
-NC='\033[0m' # No Color
+NC='\033[0m'
 
-# --- 0. LOCATION ENFORCER ---
 REQUIRED_DIR="$HOME/servarr-stack"
 CURRENT_DIR=$(pwd)
 
@@ -17,14 +15,12 @@ if [[ "$(realpath "$CURRENT_DIR")" != "$(realpath -m "$REQUIRED_DIR")" ]]; then
     exit 1
 fi
 
-# --- 1. DIRECTORY CHECK ---
 if [ ! -f "docker-compose.yml" ]; then
     echo -e "${RED}ERROR:${NC} Could not find 'docker-compose.yml'."
     echo "Please ensure you cloned the repository correctly."
     exit 1
 fi
 
-# --- 2. GATHER USER INPUTS ---
 echo "========================================"
 echo "   SERVARR STACK CONFIGURATOR"
 echo "========================================"
@@ -36,17 +32,14 @@ prompt_user() {
     echo -e "\n--- $var_name ---"
     echo -e "$desc"
     echo -e "Default: ${YELLOW}$default_val${NC}"
-    # Standard read waits for Enter key
     read -p "Enter value: " input
     if [ -z "$input" ]; then USER_INPUT="$default_val"; else USER_INPUT="$input"; fi
 }
 
-# Defaults
 DEFAULT_PUID=$(id -u)
 DEFAULT_PGID=$(id -g)
 DEFAULT_TZ="America/New_York"
 
-# Inputs
 prompt_user "PUID" "$DEFAULT_PUID" "User ID for file permissions"
 VAL_PUID=$USER_INPUT
 
@@ -56,7 +49,6 @@ VAL_PGID=$USER_INPUT
 prompt_user "TZ" "$DEFAULT_TZ" "System Timezone"
 VAL_TZ=$USER_INPUT
 
-# Network Detection
 echo -e "\n--- NETWORK CONFIGURATION ---"
 DEFAULT_IFACE=$(ip route | grep '^default' | awk '{print $5}' | head -n 1)
 DETECTED_SUBNET=$(ip route | grep "dev $DEFAULT_IFACE" | grep -v "^default" | awk '{print $1}' | head -n 1)
