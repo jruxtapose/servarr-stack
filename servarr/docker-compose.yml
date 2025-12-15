@@ -3,6 +3,11 @@ services:
     image: qmcgaw/gluetun:latest
     container_name: gluetun
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "gluetun-healthcheck"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     cap_add:
       - NET_ADMIN
     devices:
@@ -35,8 +40,10 @@ services:
   jellyfin:
     image: jellyfin/jellyfin:latest
     container_name: jellyfin
+    depends_on:
+      gluetun:
+        condition: service_healthy
     network_mode: container:gluetun
-    restart: unless-stopped
     user: ${PUID}:${PGID}
     environment:
       - TZ=${TZ}
@@ -44,10 +51,14 @@ services:
       - ${CONFIG_ROOT}/jellyfin/config:/config
       - ${CONFIG_ROOT}/jellyfin/cache:/cache
       - ${MEDIA_ROOT}:/data/media
+    restart: unless-stopped
 
   prowlarr:
     image: lscr.io/linuxserver/prowlarr:latest
     container_name: prowlarr
+    depends_on:
+      gluetun:
+        condition: service_healthy
     network_mode: container:gluetun
     environment:
       - PUID=${PUID}
@@ -58,8 +69,11 @@ services:
     restart: unless-stopped
 
   radarr:
-    container_name: radarr
     image: ghcr.io/hotio/radarr:latest
+    container_name: radarr
+    depends_on:
+      gluetun:
+        condition: service_healthy
     network_mode: container:gluetun
     environment:
       - PUID=${PUID}
@@ -73,8 +87,11 @@ services:
     restart: unless-stopped
 
   sonarr:
-    container_name: sonarr
     image: ghcr.io/hotio/sonarr:latest
+    container_name: sonarr
+    depends_on:
+      gluetun:
+        condition: service_healthy
     network_mode: container:gluetun
     environment:
       - PUID=${PUID}
@@ -89,6 +106,9 @@ services:
   flaresolverr:
     image: ghcr.io/flaresolverr/flaresolverr:latest
     container_name: flaresolverr
+    depends_on:
+      gluetun:
+        condition: service_healthy
     network_mode: container:gluetun
     environment:
       - LOG_LEVEL=info
@@ -100,6 +120,9 @@ services:
   qbittorrent:
     image: lscr.io/linuxserver/qbittorrent:latest
     container_name: qbittorrent
+    depends_on:
+      gluetun:
+        condition: service_healthy
     network_mode: container:gluetun
     environment:
       - PUID=${PUID}
