@@ -123,8 +123,8 @@ TZ=$VAL_TZ
 LOCAL_SUBNET=$VAL_SUBNET
 
 # Relative Paths (Do not change unless you know what you are doing)
-CONFIG_ROOT=.config
-DATA_ROOT=data
+CONFIG_ROOT=".config"
+DATA_ROOT="data"
 
 # Ports
 WEBUI_PORT=8091
