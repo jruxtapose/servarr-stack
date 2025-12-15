@@ -1,0 +1,117 @@
+services:
+  gluetun:
+    image: qmcgaw/gluetun:latest
+    container_name: gluetun
+    restart: unless-stopped
+    cap_add:
+      - NET_ADMIN
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - VPN_SERVICE_PROVIDER=${VPN_SERVICE_PROVIDER}
+      - VPN_TYPE=${VPN_TYPE}
+      - SERVER_COUNTRIES=${SERVER_COUNTRIES}
+      - OPENVPN_USER=${OPENVPN_USER}
+      - OPENVPN_PASSWORD=${OPENVPN_PASSWORD}
+      - WIREGUARD_PRIVATE_KEY=${WIREGUARD_PRIVATE_KEY}
+      - WIREGUARD_ADDRESSES=${WIREGUARD_ADDRESSES}
+      - FIREWALL_OUTBOUND_SUBNETS=${LOCAL_SUBNET}
+    ports:
+      # These ports are exposed on the Gluetun IP
+      - "9696:9696" # Prowlarr
+      - "7878:7878" # Radarr
+      - "8989:8989" # Sonarr
+      - "8191:8191" # Flaresolverr
+      - "8091:8091" # qBittorrent
+      - "8096:8096" # Jellyfin
+      - "8920:8920" # Jellyfin https
+      - "7359:7359/udp" #Jellyfin local discovery
+      - "1900:1900/udp" #Jellyfin DLNA/SSDP for 'dumb' tvs. YMMV, I don't use this feature.
+    networks:
+      - app_network
+
+  jellyfin:
+    image: jellyfin/jellyfin:latest
+    container_name: jellyfin
+    network_mode: container:gluetun
+    restart: unless-stopped
+    user: ${PUID}:${PGID}
+    environment:
+      - TZ=${TZ}
+    volumes:
+      - ${CONFIG_ROOT}/jellyfin/config:/config
+      - ${CONFIG_ROOT}/jellyfin/cache:/cache
+      - ${MEDIA_ROOT}:/data/media
+
+  prowlarr:
+    image: lscr.io/linuxserver/prowlarr:latest
+    container_name: prowlarr
+    network_mode: container:gluetun
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+    volumes:
+      - ${CONFIG_ROOT}/prowlarr/config:/config
+    restart: unless-stopped
+
+  radarr:
+    container_name: radarr
+    image: ghcr.io/hotio/radarr:latest
+    network_mode: container:gluetun
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - UMASK=002
+      - TZ=${TZ}
+    volumes:
+      - ${CONFIG_ROOT}/radarr/config:/config
+      # Maps the generic media root defined in .env
+      - ${MEDIA_ROOT}/data:/data
+    restart: unless-stopped
+
+  sonarr:
+    container_name: sonarr
+    image: ghcr.io/hotio/sonarr:latest
+    network_mode: container:gluetun
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - UMASK=002
+      - TZ=${TZ}
+    volumes:
+      - ${CONFIG_ROOT}/sonarr/config:/config
+      - ${MEDIA_ROOT}/data:/data
+    restart: unless-stopped
+
+  flaresolverr:
+    image: ghcr.io/flaresolverr/flaresolverr:latest
+    container_name: flaresolverr
+    network_mode: container:gluetun
+    environment:
+      - LOG_LEVEL=info
+      - LOG_HTML=false
+      - CAPTCHA_SOLVER=none
+      - TZ=${TZ}
+    restart: unless-stopped
+
+  qbittorrent:
+    image: lscr.io/linuxserver/qbittorrent:latest
+    container_name: qbittorrent
+    network_mode: container:gluetun
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+      - WEBUI_PORT=${WEBUI_PORT}
+      - TORRENTING_PORT=${TORRENTING_PORT}
+    volumes:
+      - ${CONFIG_ROOT}/qbittorrent/config:/config
+      - ${MEDIA_ROOT}/data/torrents:/data/torrents
+    restart: unless-stopped
+
+networks:
+  app_network:
+    driver: bridge
