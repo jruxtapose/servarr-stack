@@ -17,7 +17,7 @@ This method is recommended for Linux/macOS users.
 
 ### 1. Clone the Repository
 ```bash
-git clone [https://github.com/yourusername/servarr-stack.git](https://github.com/yourusername/servarr-stack.git)
+git clone https://github.com/jruxtapose/servarr-stack.git
 cd servarr-stack
 ```
 
