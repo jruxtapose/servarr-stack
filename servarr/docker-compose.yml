@@ -3,11 +3,6 @@ services:
     image: qmcgaw/gluetun:latest
     container_name: gluetun
     restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "gluetun-healthcheck"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
     cap_add:
       - NET_ADMIN
     devices:

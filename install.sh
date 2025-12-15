@@ -233,27 +233,8 @@ if [[ -z "$REPLY" || $REPLY =~ ^[Yy]$ ]]; then
     # 1. START VPN FIRST
     echo -e "\n${BLUE}Phase 1: Starting VPN (Gluetun)...${NC}"
     docker compose up -d gluetun
-    
-    # 2. WAIT FOR HEALTHY
-    echo -n "Waiting for VPN connection..."
-    for i in {1..30}; do
-        HEALTH=$(docker inspect --format='{{.State.Health.Status}}' gluetun 2>/dev/null)
-        if [ "$HEALTH" == "healthy" ]; then
-            echo -e " ${GREEN}Connected!${NC}"
-            break
-        fi
-        echo -n "."
-        sleep 2
-    done
 
-    if [ "$HEALTH" != "healthy" ]; then
-        echo -e "\n${RED}ERROR: VPN failed to connect within 60 seconds.${NC}"
-        echo "Check Docker logs for gluetun: 'docker logs gluetun'"
-        echo "Aborting startup of dependent services."
-        exit 1
-    fi
-
-    # 3. START THE REST
+    # 2. START THE REST
     echo -e "\n${BLUE}Phase 2: Starting Services...${NC}"
     docker compose up -d
     
