@@ -43,7 +43,7 @@ services:
     volumes:
       - ${CONFIG_ROOT}/jellyfin/config:/config
       - ${CONFIG_ROOT}/jellyfin/cache:/cache
-      - ${MEDIA_ROOT}:/data/media
+      - ${DATA_ROOT}/media:/data/media
     restart: unless-stopped
 
   prowlarr:
@@ -75,8 +75,7 @@ services:
       - TZ=${TZ}
     volumes:
       - ${CONFIG_ROOT}/radarr/config:/config
-      # Maps the generic media root defined in .env
-      - ${MEDIA_ROOT}/data:/data
+      - ${DATA_ROOT}:/data
     restart: unless-stopped
 
   sonarr:
@@ -93,7 +92,7 @@ services:
       - TZ=${TZ}
     volumes:
       - ${CONFIG_ROOT}/sonarr/config:/config
-      - ${MEDIA_ROOT}/data:/data
+      - ${DATA_ROOT}:/data
     restart: unless-stopped
 
   flaresolverr:
@@ -125,7 +124,7 @@ services:
       - TORRENTING_PORT=${TORRENTING_PORT}
     volumes:
       - ${CONFIG_ROOT}/qbittorrent/config:/config
-      - ${MEDIA_ROOT}/data/torrents:/data/torrents
+      - ${DATA_ROOT}/torrents:/data/torrents
     restart: unless-stopped
 
 networks:

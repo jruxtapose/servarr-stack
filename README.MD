@@ -1,150 +1,135 @@
 # Servarr VPN Stack
 
-A fully automated, privacy-focused media stack running on Docker. This stack routes all traffic (including media metadata requests) through a Gluetun VPN tunnel, ensuring your IP address is never exposed.
+A secure, fully contained media server stack running on Docker. All traffic is routed through a VPN tunnel (Gluetun) to ensure privacy.
 
-## Features
-
-* **VPN-First Design:** All containers (Radarr, Sonarr, Prowlarr, qBittorrent, Jellyfin) are routed through `gluetun`. If the VPN drops, the internet connection for these apps dies instantly (Kill Switch).
-* **Automated Setup:** Includes an interactive `install.sh` script to configure user permissions, directories, and networks automatically.
-* **Atomic Moves:** Optimized Docker volume mapping for instant file moves and hardlinking (no duplicate files).
-* **FlareSolverr:** Built-in support to bypass Cloudflare protection on indexers.
+**Services Included:**
+* **Jellyfin:** Media Server
+* **Sonarr:** TV Show Management
+* **Radarr:** Movie Management
+* **Prowlarr:** Indexer Manager
+* **qBittorrent:** Downloader (VPN Tunneled)
+* **Flaresolverr:** Cloudflare Solver
+* **Gluetun:** VPN Client (OpenVPN & WireGuard support)
 
 ---
 
-## Installation (Automated)
+## ⚠️ Requirements
 
-This method is recommended for Linux/macOS users.
+1.  **Linux OS** (Ubuntu, Debian, Fedora, etc.)
+2.  **Docker & Docker Compose** installed and running.
+3.  **VPN Subscription** (Supports AirVPN, Mullvad, NordVPN, PIA, ProtonVPN, and many others).
+
+---
+
+## 🚀 Installation
 
 ### 1. Clone the Repository
+**CRITICAL:** To ensure permission consistency, this repository **MUST** be cloned to your home directory exactly as shown below:
+
 ```bash
-git clone https://github.com/jruxtapose/servarr-stack.git
+cd ~
+git clone [https://github.com/your-username/servarr-stack.git](https://github.com/your-username/servarr-stack.git)
 cd servarr-stack
 ```
 
-### 2. Run the Installer
-The installer will check for Docker, detect your local network subnet (required for WebUI access), and generate your `.env` configuration file.
+### 2. Run the Configurator
+We provide a helper script (`setup.sh`) to generate your environment variables and fix folder permissions.
 
 ```bash
-chmod +x install.sh
-./install.sh
+chmod +x setup.sh
+./setup.sh
 ```
 
-Follow the on-screen prompts. You will need:
-* **Your VPN Credentials:**
-    * **Important:** Do not guess these! Most providers (ProtonVPN, Mullvad, PIA, etc.) require specific **Service Credentials** or **Config Files** that are different from your website login.
-    * **Find your provider here:** [Gluetun Providers List](https://github.com/qdm12/gluetun-wiki/tree/main/setup/providers)
-    * Click your provider in that list and follow the specific instructions to get the required username/password/variables ready.
-* **Your preferred media storage path.**
+**What this script does:**
+* Detects your local subnet (so you can access the WebUIs).
+* Asks for your VPN credentials (supports WireGuard & OpenVPN).
+* Generates a secure `.env` file.
+* **Fixes permissions** on the `.config` and `data` folders to prevent "Access Denied" errors.
 
-### 3. Start the Stack
-If you didn't choose to start it during the install script:
+### 3. Verify & Start
+The script will output the contents of the generated `.env` file. Review it to ensure your settings are correct.
+
+If everything looks good, start the stack:
+
 ```bash
-cd servarr
 docker compose up -d
 ```
 
 ---
 
-## Installation (Manual / Windows)
+## 🌐 Accessing Services
 
-If you cannot run the `.sh` script (e.g., you are on Windows) or prefer to configure everything manually, follow these steps.
+Once the stack is running, you can access the services via your web browser using your server's LAN IP address.
 
-> **⚠️ Windows Storage Warning:**
-> Docker on Windows often has limited support for file system **hardlinks** (atomic moves) compared to Linux.
->
-> Consequently, Sonarr and Radarr may be forced to **copy** files from your downloads folder to your media folder rather than linking them. If you plan to seed your torrents, this will result in **data duplication** (the file will exist in both locations), which will use **double the disk space**.
+| Service | Port | URL |
+| :--- | :--- | :--- |
+| **Jellyfin** | 8096 | `http://<SERVER-IP>:8096` |
+| **Sonarr** | 8989 | `http://<SERVER-IP>:8989` |
+| **Radarr** | 7878 | `http://<SERVER-IP>:7878` |
+| **Prowlarr** | 9696 | `http://<SERVER-IP>:9696` |
+| **qBittorrent** | 8091 | `http://<SERVER-IP>:8091` |
 
-### 1. Prepare Directory
-Navigate into the `servarr` subdirectory where the configuration files are located.
-```bash
-cd servarr
-```
+*Note: The initial username/password for qBittorrent can be found by running 
+    ```bash
+    docker logs qbittorrent 
+    ```
+    after running 
+    ```bash
+    docker compose up -d
+    ```
+    *
 
-### 2. Configure Environment Variables
-1. Rename `.env.example` to `.env`.
-2. Open `.env` in a text editor (Notepad, VS Code, Nano).
-3. Fill in the required values:
-   * **PUID/PGID:** On Linux, run `id` to find yours. On Windows, these can usually be left as default (1000) or removed if not needed.
-   * **MEDIA_ROOT:** The absolute path to your media folder (e.g., `C:\Users\Name\Media` or `/home/user/media`).
-   * **LOCAL_SUBNET:** Your local network range (e.g., `192.168.1.0/24`). This is required to access the WebUIs.
-   * **VPN Credentials:** Enter your VPN provider, username, and password.
-     * **Important:** Visit the [Gluetun Providers List](https://github.com/qdm12/gluetun-wiki/tree/main/setup/providers). Find your provider and follow the instructions to generate your **Service Credentials**. Do not use your regular email login unless explicitly told to do so.
+---
 
-### 3. Create Directories
-Manually create the configuration subfolders to ensure permissions are correct:
+## 📂 Folder Structure
+
+This stack uses a **self-contained** directory structure. Everything lives inside the `~/servarr-stack` folder.
+
 ```text
-/config/jellyfin
-/config/prowlarr
-/config/radarr
-/config/sonarr
-/config/qbittorrent
-```
-
-### 4. Start the Stack
-Open a terminal or command prompt in the `servarr` folder and run:
-```bash
-docker compose up -d
+/home/user/servarr-stack/
+├── .env                  # Generated Configuration (API Keys, VPN creds)
+├── docker-compose.yml    # Stack Definition
+├── setup.sh              # Configurator Script
+├── .config/              # Application Configs (Databases, Settings)
+│   ├── jellyfin/
+│   ├── sonarr/
+│   └── ...
+└── data/                 # Your Media Library
+    ├── torrents/         # Active Downloads
+    └── media/
+        ├── movies/       # Radarr Library
+        └── tv/           # Sonarr Library
 ```
 
 ---
 
-## Configuration Guide (Critical Steps)
+## 🔧 Maintenance
 
-Once the stack is running, you must configure the applications to talk to each other. Access the WebUIs using your server's IP address (e.g., `http://192.168.1.50:PORT` or `http://localhost:PORT`).
+### Updating Containers
+To update all services to the latest version:
 
-### 1. qBittorrent (Port 8091)
-* **Login:** Default username is `admin`. Default password is usually `adminadmin` (check logs if uncertain).
-* **Go to:** Tools -> Options -> Downloads.
-* **Default Save Path:** Set this **EXACTLY** to:  
-    `/data/torrents`
-* **Keep Incomplete Torrents in:** Checked.
-    `/data/torrents/.incomplete`
-* **Go to:** Tools -> Options -> Web UI.
-* **Bypass authentication for clients on localhost:** Check this box (Simplifies linking to Sonarr/Radarr).
+```bash
+docker compose pull
+docker compose up -d
+```
 
-### 2. Prowlarr (Port 9696)
-* **Add Flaresolverr:**
-    1.  Go to Settings -> Indexers -> Options.
-    2.  Add a generic **FlareSolverr** tag (e.g., `flaresolverr`).
-    3.  Go to Settings -> Indexers -> Proxies.
-    4.  Click `+` -> FlareSolverr.
-    5.  **Host:** `http://localhost:8191` (Since they share the VPN network, they talk on localhost).
-    6.  **Tags:** `flaresolverr`.
-    7.  Save.
-* **Connect to Apps:**
-    1.  Go to Settings -> Apps.
-    2.  Click `+` -> **Radarr**.
-    3.  **Prowlarr Server:** `http://localhost:9696`
-    4.  **Radarr Server:** `http://localhost:7878`
-    5.  **ApiKey:** Get this from Radarr (Settings -> General).
-    6.  Repeat for **Sonarr** (Port `8989`).
+### Changing VPN Settings
+If you need to change your VPN provider or credentials:
+1.  Run `./setup.sh` again to regenerate the `.env` file.
+2.  Restart the stack: `docker compose up -d --force-recreate`
 
-### 3. Sonarr (Port 8989) & Radarr (Port 7878)
-The steps are identical for both.
+---
 
-* **Media Management:**
-    1.  Go to Settings -> Media Management.
-    2.  Check **Show Advanced**.
-    3.  **Hardlinks:** Checked (Essential for saving space).
-    4.  **Root Folders:** Add `/data/media/tv` (for Sonarr) or `/data/media/movies` (for Radarr).
-* **Download Client:**
-    1.  Go to Settings -> Download Clients.
-    2.  Click `+` -> **qBittorrent**.
-    3.  **Name:** `Gluetun-qBit`
-    4.  **Host:** `localhost`
-    5.  **Port:** `8091`
-    6.  **Username/Password:** Your qBittorrent login.
-    7.  **Test** and **Save**.
+## 🛑 Uninstall
 
-### 4. Jellyfin (Port 8096)
-1.  Walk through the initial setup wizard.
-2.  **Add Media Library:**
-    * **Content type:** Movies
-    * **Folders:** `/data/media/movies`
-3.  **Add Media Library:**
-    * **Content type:** Shows
-    * **Folders:** `/data/media/tv`
-4.  **Connect to Sonarr/Radarr (Optional):**
-    * You can set up webhooks in Sonarr/Radarr to notify Jellyfin on new downloads to update the library instantly.
-    * In Sonarr: Settings -> Connect -> `+` -> Jellyfin.
-    * Host:
+To completely remove the stack and all data:
+
+1.  Stop the containers:
+    ```bash
+    docker compose down
+    ```
+2.  Delete the repository folder:
+    ```bash
+    rm -rf ~/servarr-stack
+    ```
+    *Warning: This will permanently delete your database configurations and your media library.*
